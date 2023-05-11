@@ -1,10 +1,10 @@
-x = 5
-y = 8
+a = 20
+b = 10
 
-If (x > y) Then
-  max = x
+If ( a > b ) Then
+    max = a
 Else
-  max = y
+    max = b
 EndIf
 
 TextWindow.WriteLine(max)

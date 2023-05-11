@@ -54,7 +54,7 @@ funccall        : ID LPAREN RPAREN
 keyobjcall      : OBJKEYWORD '.'  ID  LPAREN (expr ( ',' expr? )* )?  ')'
 ;
 
-compexpr        : arithexpr ( ROP arithexpr )*
+compexpr        : arithexpr ( ( EQ | NEQ | LT | GT | LE | GE ) arithexpr )*
 ;
 
 arithexpr       : term ( (ADD|SUB) term )*
@@ -71,7 +71,7 @@ atom            : ID | INT | DOUBLE | STRING | keyobjcall
                 | LPAREN expr RPAREN
 ;
 
-forexpr         : 'FOR' vardeclexpr 'To' arithexpr ( 'Step' expr )? NEWLINE* blocknosub 'EndFor'
+forexpr         : 'For' vardeclexpr 'To' arithexpr ( 'Step' expr )? NEWLINE* blocknosub 'EndFor'
 ;
 
 ifexpr          : 'If' LPAREN expr RPAREN NEWLINE* 'Then' NEWLINE* blocknosub elseifexpr* elseexpr? 'EndIf'
@@ -99,11 +99,9 @@ WS              : [ \t\r\n]+ -> skip ;
 AND             : 'And' ;
 OR              : 'Or' ;
 EQ              : '=' ;
-ROP             : ( CE | NEQ | GTE | LTE | GT | LT  ) ;
-CE              : '=' ;
 NEQ             : '<>' ;
-GTE             : '>=' ;
-LTE             : '<=' ;
+GE             : '>=' ;
+LE             : '<=' ;
 GT              : '>' ;
 LT              : '<' ;
 LPAREN          : '(' ;

@@ -25,7 +25,9 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     public Object visitKeyobjcall(MymssmallbasicParser.KeyobjcallContext ctx) {
         if ( ctx.OBJKEYWORD().toString().equals("TextWindow")){
             if (ctx.ID().toString().equals("WriteLine")){
-                System.out.println( visitExpr(ctx.expr(0)) );
+                System.out.println( visitExpr(ctx.expr(0)).toString() );
+            } else if (ctx.ID().toString().equals("Write")){
+                System.out.print( visitExpr(ctx.expr(0)).toString());
             }
         }
         return super.visitKeyobjcall(ctx);
@@ -34,24 +36,21 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     @Override
     public Object visitCompexpr(MymssmallbasicParser.CompexprContext ctx) {
         Object arith1 = visitArithexpr(ctx.arithexpr(0));
-        if (ctx.ROP() != null && ctx.arithexpr(1) != null) {
+        if ( (ctx.EQ(0) != null || ctx.NEQ(0) != null || ctx.LT(0) != null || ctx.GT(0) != null || ctx.LE(0) != null || ctx.GE(0) != null ) && ctx.arithexpr(1) != null) {
             Object arith2 = visitArithexpr(ctx.arithexpr(1));
-            String operator = ctx.ROP(0).toString();
-            //System.out.println(arith1 + ","+arith1.getClass() + " - " + operator +","+ operator.getClass() + " - " + arith2 + ","+arith2.getClass() );
             if ( (arith1 instanceof Integer || arith1 instanceof  Double) && (arith2 instanceof Integer || arith2 instanceof  Double)) {
-                switch (operator) {
-                    case "=":
-                        return arith1 == arith2;
-                    case "<>":
-                        return arith1 != arith2;
-                    case ">=":
-                        return Double.parseDouble(arith1.toString()) >= Double.parseDouble(arith2.toString());
-                    case "<=":
-                        return Double.parseDouble(arith1.toString()) <= Double.parseDouble(arith2.toString());
-                    case ">":
-                        return Double.parseDouble(arith1.toString()) > Double.parseDouble(arith2.toString());
-                    case "<":
-                        return Double.parseDouble(arith1.toString()) < Double.parseDouble(arith2.toString());
+                if ( ctx.EQ(0) != null ){
+                    return arith1 == arith2;
+                } else if ( ctx.NEQ(0) != null ){
+                    return arith1 != arith2;
+                } else if ( ctx.LT(0) != null ){
+                    return Double.parseDouble(arith1.toString()) < Double.parseDouble(arith2.toString());
+                } else if ( ctx.GT(0) != null ){
+                    return Double.parseDouble(arith1.toString()) > Double.parseDouble(arith2.toString());
+                } else if ( ctx.LE(0) != null ){
+                    return Double.parseDouble(arith1.toString()) <= Double.parseDouble(arith2.toString());
+                } else if ( ctx.GE(0) != null ) {
+                    return Double.parseDouble(arith1.toString()) >= Double.parseDouble(arith2.toString());
                 }
             }
         } else {
@@ -155,7 +154,7 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
         } else if ( ctx.DOUBLE() != null ) {
             return Double.parseDouble(ctx.DOUBLE().getText());
         } else if ( ctx.STRING() != null ) {
-            return ctx.STRING().getText();
+            return ctx.STRING().getText().replaceAll("^\"|\"$", "");
         } else if ( ctx.LPAREN() != null && ctx.RPAREN() != null ){
             return visitExpr(ctx.expr());
         }
@@ -166,10 +165,7 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     public Object visitVardeclexpr(MymssmallbasicParser.VardeclexprContext ctx) {
         String varname = ctx.ID().getText();
         if (symtable.get(varname) != null){
-            int line = ctx.ID().getSymbol().getLine();
-            int col = ctx.ID().getSymbol().getCharPositionInLine()+1;
-            System.err.printf("<%d:%d> Error semantico, la variable con nombre: \"" + varname + "\" ya fue declarada.\n", line, col);
-            System.exit(-1);
+            symtable.replace(varname, visitExpr(ctx.expr()));
         } else {
             symtable.put(varname, visitExpr(ctx.expr()));
         }

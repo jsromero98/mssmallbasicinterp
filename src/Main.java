@@ -4,7 +4,13 @@ import org.antlr.v4.runtime.tree.*;
 public class Main {
     public static void main(String[] args) throws Exception {
         try{
-            MymssmallbasicLexer lexer = new MymssmallbasicLexer(CharStreams.fromFileName("input/input.txt"));
+            MymssmallbasicLexer lexer ;
+            if (args.length>0) {
+                lexer = new MymssmallbasicLexer(CharStreams.fromFileName(args[0]));
+            } else {
+                System.out.println("console in mode:");
+                lexer = new MymssmallbasicLexer(CharStreams.fromStream(System.in));
+            }
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             MymssmallbasicParser parser = new MymssmallbasicParser(tokens);
             ParseTree tree = parser.inicio();
