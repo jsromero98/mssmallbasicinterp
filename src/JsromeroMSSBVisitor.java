@@ -36,20 +36,23 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
         Object arith1 = visitArithexpr(ctx.arithexpr(0));
         if (ctx.ROP() != null && ctx.arithexpr(1) != null) {
             Object arith2 = visitArithexpr(ctx.arithexpr(1));
-            String operator = ctx.ROP().toString();
-            switch (operator) {
-                case "=" :
-                    return arith1.equals(arith2);
-                case "<>" :
-                    return ! arith1.equals(arith2);
-                case ">=" :
-                    return Double.parseDouble(arith1.toString()) >= Double.parseDouble(arith2.toString());
-                case "<=" :
-                    return Double.parseDouble(arith1.toString()) <= Double.parseDouble(arith2.toString());
-                case ">" :
-                    return Double.parseDouble(arith1.toString()) > Double.parseDouble(arith2.toString());
-                case "<" :
-                    return Double.parseDouble(arith1.toString()) < Double.parseDouble(arith2.toString());
+            String operator = ctx.ROP(0).toString();
+            //System.out.println(arith1 + ","+arith1.getClass() + " - " + operator +","+ operator.getClass() + " - " + arith2 + ","+arith2.getClass() );
+            if ( (arith1 instanceof Integer || arith1 instanceof  Double) && (arith2 instanceof Integer || arith2 instanceof  Double)) {
+                switch (operator) {
+                    case "=":
+                        return arith1 == arith2;
+                    case "<>":
+                        return arith1 != arith2;
+                    case ">=":
+                        return Double.parseDouble(arith1.toString()) >= Double.parseDouble(arith2.toString());
+                    case "<=":
+                        return Double.parseDouble(arith1.toString()) <= Double.parseDouble(arith2.toString());
+                    case ">":
+                        return Double.parseDouble(arith1.toString()) > Double.parseDouble(arith2.toString());
+                    case "<":
+                        return Double.parseDouble(arith1.toString()) < Double.parseDouble(arith2.toString());
+                }
             }
         } else {
             return arith1;

@@ -32,11 +32,15 @@ statementnosub  : vardeclexpr
                 | funccall
 ;
 
-vardeclexpr        : ID EQ expr
+// TODO arreglos y mamadas
+
+vardeclexpr        : ID EQ (expr|keyobjcall)
 ;
 
 arrdeclexpr        : ID ( LBRACK (INT|STRING) RBRACK )* EQ expr
 ;
+
+// TODO precedencia And > Or
 
 expr            : compexpr ( ('And'|'Or') compexpr)*
 ;
@@ -63,23 +67,23 @@ factor          : (ADD|SUB) atom
                 | atom
 ;
 
-atom            : ID | INT | DOUBLE | STRING
+atom            : ID | INT | DOUBLE | STRING | keyobjcall
                 | LPAREN expr RPAREN
 ;
 
-forexpr         : 'FOR' vardeclexpr 'To' expr ( 'Step' expr )? NEWLINE* blocknosub 'EndFor'
+forexpr         : 'FOR' vardeclexpr 'To' arithexpr ( 'Step' expr )? NEWLINE* blocknosub 'EndFor'
 ;
 
-ifexpr          : 'If' LPAREN compexpr RPAREN NEWLINE* 'Then' NEWLINE* blocknosub elseifexpr* elseexpr? 'EndIf'
+ifexpr          : 'If' LPAREN expr RPAREN NEWLINE* 'Then' NEWLINE* blocknosub elseifexpr* elseexpr? 'EndIf'
 ;
 
-elseifexpr      : 'ElseIf' LPAREN compexpr RPAREN blocknosub
+elseifexpr      : 'ElseIf' LPAREN expr RPAREN blocknosub
 ;
 
 elseexpr        : 'Else' blocknosub
 ;
 
-whileexpr       : 'While' LPAREN compexpr RPAREN NEWLINE* blocknosub 'EndWhile'
+whileexpr       : 'While' LPAREN expr RPAREN NEWLINE* blocknosub 'EndWhile'
 ;
 
 funcdef         : 'Sub' ID blocknosub 'EndSub'
@@ -95,7 +99,8 @@ WS              : [ \t\r\n]+ -> skip ;
 AND             : 'And' ;
 OR              : 'Or' ;
 EQ              : '=' ;
-ROP             : ( NEQ | GTE | LTE | GT | LT | EQ ) ;
+ROP             : ( CE | NEQ | GTE | LTE | GT | LT  ) ;
+CE              : '=' ;
 NEQ             : '<>' ;
 GTE             : '>=' ;
 LTE             : '<=' ;

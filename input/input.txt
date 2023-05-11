@@ -1,2 +1,10 @@
-a = (5+2)*2-1
-TextWindow.WriteLine(a)
+x = 5
+y = 8
+
+If (x > y) Then
+  max = x
+Else
+  max = y
+EndIf
+
+TextWindow.WriteLine(max)
