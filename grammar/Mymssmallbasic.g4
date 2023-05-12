@@ -34,15 +34,16 @@ statementnosub  : vardeclexpr
 
 // TODO arreglos y mamadas
 
-vardeclexpr        : ID EQ (expr|keyobjcall)
+vardeclexpr        : ID EQ (exprand|keyobjcall)
 ;
 
-arrdeclexpr        : ID ( LBRACK (INT|STRING) RBRACK )* EQ expr
+arrdeclexpr        : ID ( LBRACK (INT|STRING) RBRACK )* EQ exprand
 ;
 
-// TODO precedencia And > Or
+exprand            : expror ( AND expror)*
+;
 
-expr            : compexpr ( ('And'|'Or') compexpr)*
+expror            : compexpr ( OR compexpr)*
 ;
 
 label           : ID ':'
@@ -51,16 +52,18 @@ label           : ID ':'
 funccall        : ID LPAREN RPAREN
 ;
 
-keyobjcall      : OBJKEYWORD '.'  ID  LPAREN (expr ( ',' expr? )* )?  ')'
+keyobjcall      : OBJKEYWORD '.'  ID  LPAREN (exprand ( ',' exprand? )* )?  ')'
 ;
 
-compexpr        : arithexpr ( ( EQ | NEQ | LT | GT | LE | GE ) arithexpr )*
+compexpr        : arithexpr ( ( EQ | NEQ | LT | GT | LE | GE ) arithexpr )?
 ;
 
-arithexpr       : term ( (ADD|SUB) term )*
+arithexpr       : arithexpr  (ADD|SUB) term
+                | term
 ;
 
-term            : factor ( (MUL|DIV) factor )*
+term            : term  (MUL|DIV) factor
+                | factor
 ;
 
 factor          : (ADD|SUB) atom
@@ -68,22 +71,22 @@ factor          : (ADD|SUB) atom
 ;
 
 atom            : ID | INT | DOUBLE | STRING | keyobjcall
-                | LPAREN expr RPAREN
+                | LPAREN exprand RPAREN
 ;
 
-forexpr         : 'For' vardeclexpr 'To' arithexpr ( 'Step' expr )? NEWLINE* blocknosub 'EndFor'
+forexpr         : 'For' vardeclexpr 'To' arithexpr ( 'Step' arithexpr )? NEWLINE* blocknosub 'EndFor'
 ;
 
-ifexpr          : 'If' LPAREN expr RPAREN NEWLINE* 'Then' NEWLINE* blocknosub elseifexpr* elseexpr? 'EndIf'
+ifexpr          : 'If' LPAREN exprand RPAREN NEWLINE* 'Then' NEWLINE* blocknosub elseifexpr* elseexpr? 'EndIf'
 ;
 
-elseifexpr      : 'ElseIf' LPAREN expr RPAREN blocknosub
+elseifexpr      : 'ElseIf' LPAREN exprand RPAREN blocknosub
 ;
 
 elseexpr        : 'Else' blocknosub
 ;
 
-whileexpr       : 'While' LPAREN expr RPAREN NEWLINE* blocknosub 'EndWhile'
+whileexpr       : 'While' LPAREN exprand RPAREN NEWLINE* blocknosub 'EndWhile'
 ;
 
 funcdef         : 'Sub' ID blocknosub 'EndSub'

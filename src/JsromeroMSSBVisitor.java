@@ -1,33 +1,53 @@
 import java.util.HashMap;
+import java.util.Locale;
 
 public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     HashMap<String,Object> symtable = new HashMap<>();
 
     @Override
-    public Object visitExpr(MymssmallbasicParser.ExprContext ctx) {
-        Object comp1 = visitCompexpr(ctx.compexpr(0));
-        if ( (ctx.AND() != null || ctx.OR() != null) && ctx.compexpr(1) != null ){
-            Object comp2 = visitCompexpr(ctx.compexpr(1));
-            boolean bool1 = comp1.toString().equals("\"true\"");
-            boolean bool2 = comp2.toString().equals("\"true\"");
-            if (ctx.AND(0) != null){
+    public Object visitExprand(MymssmallbasicParser.ExprandContext ctx) {
+        Object comp1 = visitExpror(ctx.expror(0));
+        if ( ctx.AND(0) != null  && ctx.expror(1) != null ){
+            Object comp2 = visitExpror(ctx.expror(1));
+            if (comp1 instanceof Boolean && comp2 instanceof Boolean) {
+                return (boolean) comp1 && (boolean) comp2;
+            } else if ( comp1 instanceof String && comp2 instanceof String ) {
+                boolean bool1 = comp1.toString().equals("\"true\"");
+                boolean bool2 = comp2.toString().equals("\"true\"");
                 return bool1 && bool2;
-            } else if (ctx.OR(0) != null){
-                return bool1 | bool2;
             }
         } else {
             return comp1;
         }
-        return super.visitExpr(ctx);
+        return super.visitExprand(ctx);
+    }
+
+    @Override
+    public Object visitExpror(MymssmallbasicParser.ExprorContext ctx) {
+        Object comp1 = visitCompexpr(ctx.compexpr(0));
+        //System.out.println(comp1.getClass());
+        if (  ctx.OR(0) != null && ctx.compexpr(1) != null ){
+            Object comp2 = visitCompexpr(ctx.compexpr(1));
+            if (comp1 instanceof Boolean && comp2 instanceof Boolean){
+                return (boolean) comp1 || (boolean) comp2;
+            } else if ( comp1 instanceof String && comp2 instanceof String ) {
+                boolean bool1 = comp1.toString().equalsIgnoreCase("\"true\"");
+                boolean bool2 = comp2.toString().equalsIgnoreCase("\"true\"");
+                return bool1 || bool2;
+            }
+        } else {
+            return comp1;
+        }
+        return super.visitExpror(ctx);
     }
 
     @Override
     public Object visitKeyobjcall(MymssmallbasicParser.KeyobjcallContext ctx) {
         if ( ctx.OBJKEYWORD().toString().equals("TextWindow")){
             if (ctx.ID().toString().equals("WriteLine")){
-                System.out.println( visitExpr(ctx.expr(0)).toString() );
+                System.out.println( visitExprand(ctx.exprand(0)).toString() );
             } else if (ctx.ID().toString().equals("Write")){
-                System.out.print( visitExpr(ctx.expr(0)).toString());
+                System.out.print( visitExprand(ctx.exprand(0)).toString());
             }
         }
         return super.visitKeyobjcall(ctx);
@@ -36,20 +56,20 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     @Override
     public Object visitCompexpr(MymssmallbasicParser.CompexprContext ctx) {
         Object arith1 = visitArithexpr(ctx.arithexpr(0));
-        if ( (ctx.EQ(0) != null || ctx.NEQ(0) != null || ctx.LT(0) != null || ctx.GT(0) != null || ctx.LE(0) != null || ctx.GE(0) != null ) && ctx.arithexpr(1) != null) {
+        if ( (ctx.EQ() != null || ctx.NEQ() != null || ctx.LT() != null || ctx.GT() != null || ctx.LE() != null || ctx.GE() != null ) && ctx.arithexpr(1) != null) {
             Object arith2 = visitArithexpr(ctx.arithexpr(1));
             if ( (arith1 instanceof Integer || arith1 instanceof  Double) && (arith2 instanceof Integer || arith2 instanceof  Double)) {
-                if ( ctx.EQ(0) != null ){
+                if ( ctx.EQ() != null ){
                     return arith1 == arith2;
-                } else if ( ctx.NEQ(0) != null ){
+                } else if ( ctx.NEQ() != null ){
                     return arith1 != arith2;
-                } else if ( ctx.LT(0) != null ){
+                } else if ( ctx.LT() != null ){
                     return Double.parseDouble(arith1.toString()) < Double.parseDouble(arith2.toString());
-                } else if ( ctx.GT(0) != null ){
+                } else if ( ctx.GT() != null ){
                     return Double.parseDouble(arith1.toString()) > Double.parseDouble(arith2.toString());
-                } else if ( ctx.LE(0) != null ){
+                } else if ( ctx.LE() != null ){
                     return Double.parseDouble(arith1.toString()) <= Double.parseDouble(arith2.toString());
-                } else if ( ctx.GE(0) != null ) {
+                } else if ( ctx.GE() != null ) {
                     return Double.parseDouble(arith1.toString()) >= Double.parseDouble(arith2.toString());
                 }
             }
@@ -61,69 +81,65 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
 
     @Override
     public Object visitArithexpr(MymssmallbasicParser.ArithexprContext ctx) {
-        Object term1 = visitTerm(ctx.term(0));
-        if ( (ctx.ADD(0) != null || ctx.SUB(0) != null) && ctx.term(1) != null ){
-            Object term2 = visitTerm(ctx.term(1));
-            if ( term1 instanceof Integer && term2 instanceof Integer ){
-                if (ctx.ADD(0) != null ){
-                    return Integer.parseInt(term1.toString()) + Integer.parseInt(term2.toString());
-                } else if (ctx.SUB(0) != null ){
-                    return Integer.parseInt(term1.toString()) - Integer.parseInt(term2.toString());
+        Object term = visitTerm(ctx.term());
+        if ( (ctx.ADD() != null || ctx.SUB() != null) && ctx.arithexpr() != null ){
+            Object arith = visitArithexpr(ctx.arithexpr());
+            if ( arith instanceof Integer && term instanceof Integer ){
+                if (ctx.ADD() != null ){
+                    return Integer.parseInt(arith.toString()) + Integer.parseInt(term.toString());
+                } else if (ctx.SUB() != null ){
+                    return Integer.parseInt(arith.toString()) - Integer.parseInt(term.toString());
                 }
-            } else if (term1 instanceof Double || term2 instanceof Double ){
-                if (ctx.ADD(0) != null ){
-                    return Double.parseDouble(term1.toString()) + Double.parseDouble(term2.toString());
-                } else if (ctx.SUB(0) != null ){
-                    return Double.parseDouble(term1.toString()) - Double.parseDouble(term2.toString());
+            } else if (arith instanceof Double || term instanceof Double ){
+                if (ctx.ADD() != null ){
+                    return Double.parseDouble(arith.toString()) + Double.parseDouble(term.toString());
+                } else if (ctx.SUB() != null ){
+                    return Double.parseDouble(arith.toString()) - Double.parseDouble(term.toString());
                 }
-            } else if (term1 instanceof String && term2 instanceof String ) {
-                if (ctx.ADD(0) != null ){
-                    return term1.toString() + term2.toString();
+            } else if (arith instanceof String && term instanceof String ) {
+                if (ctx.ADD() != null ){
+                    return arith + term.toString();
                 }
             }
-        } else {
-            return term1;
         }
-        return super.visitArithexpr(ctx);
+        return term;
     }
 
     @Override
     public Object visitTerm(MymssmallbasicParser.TermContext ctx) {
-        Object factor1 = visitFactor(ctx.factor(0));
-        if ( (ctx.MUL(0) != null || ctx.DIV(0) != null) && ctx.factor(1) != null ){
-            Object factor2 = visitFactor(ctx.factor(1));
-            if (factor1 instanceof Integer && factor2 instanceof Integer){
-                if (ctx.MUL(0) != null ){
-                    return Integer.parseInt(factor1.toString()) * Integer.parseInt(factor2.toString());
-                } else if (ctx.DIV(0) != null){
-                    if (Double.parseDouble(factor2.toString()) == 0.0){
+        Object factor = visitFactor(ctx.factor());
+        if ( (ctx.MUL() != null || ctx.DIV() != null) && ctx.term() != null ){
+            Object term = visitTerm(ctx.term());
+            if (term instanceof Integer && factor instanceof Integer){
+                if (ctx.MUL() != null ){
+                    return Integer.parseInt(term.toString()) * Integer.parseInt(factor.toString());
+                } else if (ctx.DIV() != null){
+                    if (Double.parseDouble(factor.toString()) == 0.0){
                         System.err.printf(" Error arimetico, division por 0 .\n");
                         System.exit(-1);
                     } else {
-                        int remainder = Integer.parseInt(factor1.toString()) % Integer.parseInt(factor2.toString());
+                        int remainder = Integer.parseInt(term.toString()) % Integer.parseInt(factor.toString());
                         if (remainder == 0) {
-                            return Integer.parseInt(factor1.toString()) / Integer.parseInt(factor2.toString());
+                            return Integer.parseInt(term.toString()) / Integer.parseInt(factor.toString());
                         } else {
-                            return Double.parseDouble(factor1.toString()) / Double.parseDouble(factor2.toString());
+                            return Double.parseDouble(term.toString()) / Double.parseDouble(factor.toString());
                         }
                     }
                 }
-            } else if (factor1 instanceof Double || factor2 instanceof Double){
-                if (ctx.MUL(0) != null ){
-                    return Double.parseDouble(factor1.toString()) * Double.parseDouble(factor2.toString());
-                } else if (ctx.DIV(0) != null){
-                    if (Double.parseDouble(factor2.toString()) == 0.0){
+            } else if (term instanceof Double || factor instanceof Double){
+                if (ctx.MUL() != null ){
+                    return Double.parseDouble(term.toString()) * Double.parseDouble(factor.toString());
+                } else if (ctx.DIV() != null){
+                    if (Double.parseDouble(factor.toString()) == 0.0){
                         System.err.printf("Error arimetico, division por 0 .\n");
                         System.exit(-1);
                     } else {
-                        return Double.parseDouble(factor1.toString()) / Double.parseDouble(factor2.toString());
+                        return Double.parseDouble(term.toString()) / Double.parseDouble(factor.toString());
                     }
                 }
             }
-        } else {
-            return factor1;
         }
-        return super.visitTerm(ctx);
+        return factor;
     }
 
     @Override
@@ -154,9 +170,16 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
         } else if ( ctx.DOUBLE() != null ) {
             return Double.parseDouble(ctx.DOUBLE().getText());
         } else if ( ctx.STRING() != null ) {
-            return ctx.STRING().getText().replaceAll("^\"|\"$", "");
+            // comp1.toString().equals("\"true\"");
+            if (ctx.STRING().getText().equalsIgnoreCase("\"true\"")){
+                return true;
+            } else if (ctx.STRING().getText().equalsIgnoreCase("\"false\"")){
+                return false;
+            } else {
+                return ctx.STRING().getText().replaceAll("^\"|\"$", "");
+            }
         } else if ( ctx.LPAREN() != null && ctx.RPAREN() != null ){
-            return visitExpr(ctx.expr());
+            return visitExprand(ctx.exprand());
         }
         return super.visitAtom(ctx);
     }
@@ -165,12 +188,47 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     public Object visitVardeclexpr(MymssmallbasicParser.VardeclexprContext ctx) {
         String varname = ctx.ID().getText();
         if (symtable.get(varname) != null){
-            symtable.replace(varname, visitExpr(ctx.expr()));
+            symtable.replace(varname, visitExprand(ctx.exprand()));
         } else {
-            symtable.put(varname, visitExpr(ctx.expr()));
+            symtable.put(varname, visitExprand(ctx.exprand()));
         }
         return super.visitVardeclexpr(ctx);
     }
 
+    @Override
+    public Object visitIfexpr(MymssmallbasicParser.IfexprContext ctx) {
+        Object exprres = visitExprand(ctx.exprand());
+        //System.out.println(ctx.exprand().getText()+"-"+exprres);
+        if (exprres instanceof Boolean){
+            if (Boolean.parseBoolean(exprres.toString())){
+                return visitBlocknosub(ctx.blocknosub());
+            } else {
+                int elseifcount = ctx.elseifexpr().size();
+                if (elseifcount > 0){
+                    // TODO elseifs
+                } else {
+                    return visitElseexpr(ctx.elseexpr());
+                }
+            }
+        }
+        return super.visitIfexpr(ctx);
+    }
 
+    @Override
+    public Object visitForexpr(MymssmallbasicParser.ForexprContext ctx) {
+        visitVardeclexpr(ctx.vardeclexpr());
+        String varname = ctx.vardeclexpr().ID().getText();
+        int index =  Integer.parseInt(symtable.get(ctx.vardeclexpr().ID().getText()).toString());
+        int limit = Integer.parseInt(visitArithexpr(ctx.arithexpr(0)).toString());
+        int steping = 1;
+        if ( ctx.arithexpr(1) != null ){
+            steping = (int) visitArithexpr(ctx.arithexpr(1));
+        }
+        for ( ; index <= limit; ) {
+            visitBlocknosub(ctx.blocknosub());
+            int stepped = index += steping;
+            symtable.put(varname,stepped);
+        }
+        return null;
+    }
 }

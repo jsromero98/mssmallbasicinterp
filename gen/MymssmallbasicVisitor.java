@@ -52,11 +52,17 @@ public interface MymssmallbasicVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArrdeclexpr(MymssmallbasicParser.ArrdeclexprContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MymssmallbasicParser#expr}.
+	 * Visit a parse tree produced by {@link MymssmallbasicParser#exprand}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExpr(MymssmallbasicParser.ExprContext ctx);
+	T visitExprand(MymssmallbasicParser.ExprandContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MymssmallbasicParser#expror}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpror(MymssmallbasicParser.ExprorContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MymssmallbasicParser#label}.
 	 * @param ctx the parse tree
