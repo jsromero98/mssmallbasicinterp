@@ -37,7 +37,7 @@ statementnosub  : vardeclexpr
 vardeclexpr        : ID EQ (exprand|keyobjcall)
 ;
 
-arrdeclexpr        : ID ( LBRACK (INT|STRING) RBRACK )* EQ exprand
+arrdeclexpr        : ID ( LBRACK (INT|STRING) RBRACK )* EQ ( exprand | keyobjcall )
 ;
 
 exprand            : expror ( AND expror)*
@@ -70,8 +70,11 @@ factor          : (ADD|SUB) atom
                 | atom
 ;
 
-atom            : ID | INT | DOUBLE | STRING | keyobjcall
+atom            : varcall | INT | DOUBLE | STRING | keyobjcall
                 | LPAREN exprand RPAREN
+;
+
+varcall         : ID ( (LBRACK INT RBRACK)+ | LBRACK STRING RBRACK )?
 ;
 
 forexpr         : 'For' vardeclexpr 'To' arithexpr ( 'Step' arithexpr )? NEWLINE* blocknosub 'EndFor'

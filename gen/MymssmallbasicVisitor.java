@@ -112,6 +112,12 @@ public interface MymssmallbasicVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAtom(MymssmallbasicParser.AtomContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MymssmallbasicParser#varcall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVarcall(MymssmallbasicParser.VarcallContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MymssmallbasicParser#forexpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

@@ -1,22 +1,9 @@
-' Triángulo de Pascal
+b = 15
+h = 11
 
-rows = 8
+rectangle_area = b*h
+triangle_area = rectangle_area/2
 
-For i = 0 To rows - 1
-   For space = 1 To rows - i
-      TextWindow.Write("   ")
-   EndFor
-
-   For j = 0 To i Step 1
-      If (j = 0 Or i = 0) Then
-         coef = 1
-      Else
-         coef = coef * (i - j + 1) / j
-      EndIf
-
-      TextWindow.Write(coef)
-      TextWindow.Write("  ")
-   EndFor
-
-   TextWindow.WriteLine("")
-EndFor
+TextWindow.WriteLine(rectangle_area)
+TextWindow.WriteLine("-------")
+TextWindow.WriteLine(triangle_area)

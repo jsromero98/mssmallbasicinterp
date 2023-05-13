@@ -1,8 +1,11 @@
+
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 
 public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
-    HashMap<String,Object> symtable = new HashMap<>();
+    HashMap<String,Object> varsymtable = new HashMap<>();
+    HashMap<String, List<Object>> arrsymtable = new HashMap<>();
+    HashMap<String, HashMap<String,Object>> dictsymtable = new HashMap<>();
 
     @Override
     public Object visitExprand(MymssmallbasicParser.ExprandContext ctx) {
@@ -163,8 +166,8 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
 
     @Override
     public Object visitAtom(MymssmallbasicParser.AtomContext ctx) {
-        if ( ctx.ID() != null ) {
-            return symtable.get(ctx.ID().getText());
+        if ( ctx.varcall() != null ) {
+            return visitVarcall(ctx.varcall());
         } else if ( ctx.INT() != null ) {
             return Integer.parseInt(ctx.INT().getText());
         } else if ( ctx.DOUBLE() != null ) {
@@ -185,12 +188,19 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     }
 
     @Override
+    public Object visitVarcall(MymssmallbasicParser.VarcallContext ctx) {
+        // TODO insert onto hashmaps
+        return super.visitVarcall(ctx);
+    }
+
+    @Override
     public Object visitVardeclexpr(MymssmallbasicParser.VardeclexprContext ctx) {
+        // TODO add lists and dicts
         String varname = ctx.ID().getText();
-        if (symtable.get(varname) != null){
-            symtable.replace(varname, visitExprand(ctx.exprand()));
+        if (varsymtable.get(varname) != null){
+            varsymtable.replace(varname, visitExprand(ctx.exprand()));
         } else {
-            symtable.put(varname, visitExprand(ctx.exprand()));
+            varsymtable.put(varname, visitExprand(ctx.exprand()));
         }
         return super.visitVardeclexpr(ctx);
     }
@@ -198,15 +208,24 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     @Override
     public Object visitIfexpr(MymssmallbasicParser.IfexprContext ctx) {
         Object exprres = visitExprand(ctx.exprand());
-        //System.out.println(ctx.exprand().getText()+"-"+exprres);
         if (exprres instanceof Boolean){
             if (Boolean.parseBoolean(exprres.toString())){
                 return visitBlocknosub(ctx.blocknosub());
             } else {
+                boolean verflag = false;
                 int elseifcount = ctx.elseifexpr().size();
                 if (elseifcount > 0){
-                    // TODO elseifs
-                } else {
+                    for (int i = 0; i < elseifcount; i++) {
+                        Object elifexprres = visitExprand(ctx.elseifexpr(i).exprand());
+                        if ((boolean) elifexprres){
+                            visitBlocknosub(ctx.elseifexpr(i).blocknosub());
+                            verflag = true;
+                        }
+                        if (verflag){
+                            break;
+                        }
+                    }
+                } if (! verflag ){
                     return visitElseexpr(ctx.elseexpr());
                 }
             }
@@ -218,7 +237,7 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     public Object visitForexpr(MymssmallbasicParser.ForexprContext ctx) {
         visitVardeclexpr(ctx.vardeclexpr());
         String varname = ctx.vardeclexpr().ID().getText();
-        int index =  Integer.parseInt(symtable.get(ctx.vardeclexpr().ID().getText()).toString());
+        int index =  Integer.parseInt(varsymtable.get(ctx.vardeclexpr().ID().getText()).toString());
         int limit = Integer.parseInt(visitArithexpr(ctx.arithexpr(0)).toString());
         int steping = 1;
         if ( ctx.arithexpr(1) != null ){
@@ -227,8 +246,18 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
         for ( ; index <= limit; ) {
             visitBlocknosub(ctx.blocknosub());
             int stepped = index += steping;
-            symtable.put(varname,stepped);
+            varsymtable.put(varname,stepped);
         }
         return null;
+    }
+
+    @Override
+    public Object visitWhileexpr(MymssmallbasicParser.WhileexprContext ctx) {
+        Object exprres = visitExprand(ctx.exprand());
+        while ((boolean) exprres){
+            visitBlocknosub(ctx.blocknosub());
+            exprres = visitExprand(ctx.exprand());
+        }
+        return super.visitWhileexpr(ctx);
     }
 }
