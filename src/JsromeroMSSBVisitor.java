@@ -1,11 +1,14 @@
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Stack;
 
 public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     HashMap<String,Object> varsymtable = new HashMap<>();
-    HashMap<String, List<Object>> arrsymtable = new HashMap<>();
-    HashMap<String, HashMap<String,Object>> dictsymtable = new HashMap<>();
+    HashMap<String, Stack> stacksymtable = new HashMap<>();
+    HashMap<String, Object> funcsymtable = new HashMap<>();
+    HashMap<String, Integer> labelsymtable = new HashMap<>();
+    int instructionpointer = 0;
 
     @Override
     public Object visitExprand(MymssmallbasicParser.ExprandContext ctx) {
@@ -47,13 +50,35 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
     @Override
     public Object visitKeyobjcall(MymssmallbasicParser.KeyobjcallContext ctx) {
         if ( ctx.OBJKEYWORD().toString().equals("TextWindow")){
-            if (ctx.ID().toString().equals("WriteLine")){
+            if (ctx.ID().getText().equals("WriteLine")){
                 System.out.println( visitExprand(ctx.exprand(0)).toString() );
             } else if (ctx.ID().toString().equals("Write")){
                 System.out.print( visitExprand(ctx.exprand(0)).toString());
             }
+        } else if (ctx.OBJKEYWORD().toString().equals("Stack")) {
+            if (ctx.ID().getText().equals("PushValue")){
+                String stackname = ctx.exprand(0).getText();
+                Stack stackobj = stacksymtable.get(stackname);
+                if(stackobj instanceof Stack){
+                    stackobj.push(visitExprand(ctx.exprand(1)));
+                    stacksymtable.replace(stackname,stackobj);
+                } else {
+                    stackobj = new Stack();
+                    stackobj.push(visitExprand(ctx.exprand(1)));
+                    stacksymtable.put(stackname,stackobj);
+                }
+            } else if (ctx.ID().getText().equals("PopValue")){
+                String stackname = ctx.exprand(0).getText();
+                Stack stackobj = stacksymtable.get(stackname);
+                if(stackobj instanceof Stack){
+                    return stackobj.pop();
+                } else {
+                    System.out.println("No existe el stack");
+                    return null;
+                }
+            }
         }
-        return super.visitKeyobjcall(ctx);
+        return null;
     }
 
     @Override
@@ -99,9 +124,9 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
                 } else if (ctx.SUB() != null ){
                     return Double.parseDouble(arith.toString()) - Double.parseDouble(term.toString());
                 }
-            } else if (arith instanceof String && term instanceof String ) {
+            } else if (arith instanceof String || term instanceof String ) {
                 if (ctx.ADD() != null ){
-                    return arith + term.toString();
+                    return arith.toString() + term.toString();
                 }
             }
         }
@@ -189,48 +214,74 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
 
     @Override
     public Object visitVarcall(MymssmallbasicParser.VarcallContext ctx) {
-        // TODO insert onto hashmaps
-        return super.visitVarcall(ctx);
+        String varname = ctx.ID().getText();
+        Object retval;
+        if (ctx.LBRACK(0) == null){
+            retval = varsymtable.get(varname);
+        } else {
+            int indexes = ctx.arithexpr().size();
+            for (int i = 0; i < indexes; i++) {
+                varname+="["+visitArithexpr(ctx.arithexpr(i))+"]";
+            }
+            retval = varsymtable.get(varname);
+        }
+        if (retval != null){
+            return retval;
+        } else {
+            return "";
+        }
     }
 
     @Override
     public Object visitVardeclexpr(MymssmallbasicParser.VardeclexprContext ctx) {
-        // TODO add lists and dicts
+        // TODO add lists and dicts in good way (?)
         String varname = ctx.ID().getText();
         if (varsymtable.get(varname) != null){
             varsymtable.replace(varname, visitExprand(ctx.exprand()));
         } else {
             varsymtable.put(varname, visitExprand(ctx.exprand()));
         }
-        return super.visitVardeclexpr(ctx);
+        return null;
+    }
+
+    @Override
+    public Object visitArrdeclexpr(MymssmallbasicParser.ArrdeclexprContext ctx) {
+        String varname = ctx.ID().getText();
+        int indexes = ctx.arithexpr().size();
+        for (int i = 0; i < indexes; i++) {
+            varname+="["+visitArithexpr(ctx.arithexpr(i))+"]";
+        }
+        if (varsymtable.get(varname) != null){
+            varsymtable.replace(varname, visitExprand(ctx.exprand()));
+        } else {
+            varsymtable.put(varname, visitExprand(ctx.exprand()));
+        }
+        return super.visitArrdeclexpr(ctx);
     }
 
     @Override
     public Object visitIfexpr(MymssmallbasicParser.IfexprContext ctx) {
         Object exprres = visitExprand(ctx.exprand());
         if (exprres instanceof Boolean){
-            if (Boolean.parseBoolean(exprres.toString())){
+            if ((boolean)exprres){
                 return visitBlocknosub(ctx.blocknosub());
             } else {
                 boolean verflag = false;
                 int elseifcount = ctx.elseifexpr().size();
-                if (elseifcount > 0){
-                    for (int i = 0; i < elseifcount; i++) {
-                        Object elifexprres = visitExprand(ctx.elseifexpr(i).exprand());
-                        if ((boolean) elifexprres){
-                            visitBlocknosub(ctx.elseifexpr(i).blocknosub());
-                            verflag = true;
-                        }
-                        if (verflag){
-                            break;
-                        }
+                for (int i = 0; i < elseifcount; i++) {
+                    Object elifexprres = visitExprand(ctx.elseifexpr(i).exprand());
+                    if ((boolean) elifexprres){
+                        visitBlocknosub(ctx.elseifexpr(i).blocknosub());
+                        verflag = true;
+                        break;
                     }
-                } if (! verflag ){
+                }
+                if (! verflag && ctx.elseexpr() != null){
                     return visitElseexpr(ctx.elseexpr());
                 }
             }
         }
-        return super.visitIfexpr(ctx);
+        return null;
     }
 
     @Override
@@ -258,6 +309,57 @@ public class JsromeroMSSBVisitor extends MymssmallbasicBaseVisitor{
             visitBlocknosub(ctx.blocknosub());
             exprres = visitExprand(ctx.exprand());
         }
-        return super.visitWhileexpr(ctx);
+        return null;
     }
+
+    @Override
+    public Object visitInicio(MymssmallbasicParser.InicioContext ctx) {
+        for (int i = 0; i < ctx.block().statement().size(); i++) {
+            if (ctx.block().statement(i).funcdef() != null){
+                String funcname = ctx.block().statement(i).funcdef().ID().getText();
+                Object funcblock = ctx.block().statement(i).funcdef().blocknosub();
+                funcsymtable.put(funcname,funcblock);
+            } else if (ctx.block().statement(i).label() != null){
+                String labelname = ctx.block().statement(i).label().ID().getText();
+                labelsymtable.put(labelname,instructionpointer);
+            }
+            instructionpointer++;
+        }
+        instructionpointer = 0;
+        visitChildren(ctx);
+        return null;
+    }
+
+    @Override
+    public Object visitStatement(MymssmallbasicParser.StatementContext ctx) {
+        if (ctx.funcdef() == null ){
+            return super.visitStatement(ctx);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public Object visitGoto(MymssmallbasicParser.GotoContext ctx) {
+        String labelname = ctx.ID().getText();
+        instructionpointer = labelsymtable.get(labelname);
+        return null;
+    }
+
+    @Override
+    public Object visitBlock(MymssmallbasicParser.BlockContext ctx) {
+        for (; instructionpointer < ctx.statement().size(); instructionpointer++) {
+            visitStatement(ctx.statement(instructionpointer));
+        }
+        return null;
+    }
+
+    @Override
+    public Object visitFunccall(MymssmallbasicParser.FunccallContext ctx) {
+        String funcname = ctx.ID().getText();
+        Object funcblock = funcsymtable.get(funcname);
+        visitBlocknosub((MymssmallbasicParser.BlocknosubContext) funcblock);
+        return super.visitFunccall(ctx);
+    }
+
 }

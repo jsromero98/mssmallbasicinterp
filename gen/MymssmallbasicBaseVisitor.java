@@ -87,6 +87,13 @@ public class MymssmallbasicBaseVisitor<T> extends AbstractParseTreeVisitor<T> im
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitGoto(MymssmallbasicParser.GotoContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitFunccall(MymssmallbasicParser.FunccallContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

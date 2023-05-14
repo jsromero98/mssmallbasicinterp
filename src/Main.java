@@ -21,7 +21,9 @@ public class Main {
                 System.out.println();
                 System.out.println("Symbol table ----");
                 System.out.println();
-                System.out.println(loader.symtable);
+                System.out.println(loader.funcsymtable);
+                System.out.println(loader.labelsymtable);
+                System.out.println(loader.varsymtable);
             }
         } catch (Exception e){
             System.err.println("Error (Test): " + e);

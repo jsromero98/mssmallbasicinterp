@@ -70,6 +70,12 @@ public interface MymssmallbasicVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitLabel(MymssmallbasicParser.LabelContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MymssmallbasicParser#goto}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGoto(MymssmallbasicParser.GotoContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MymssmallbasicParser#funccall}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
